@@ -1,5 +1,6 @@
 package com.kane.manage_product.controllers;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -195,6 +196,34 @@ public class ProductsController {
             return "products/EditProduct";
         }
 
+        return "redirect:/products";
+    }
+
+    @GetMapping("/delete")
+    public String deleteProduct(
+            @RequestParam int id) {
+
+        try {
+            Product product = repo.findById(id).get();
+
+            // delete image file
+            Path imagePath = Paths.get("static/images/" + product.getImageFileName());
+            try {
+                Files.deleteIfExists(imagePath);
+            } catch (Exception e) {
+                // handle exception
+                System.out.println("Delete image file Error occurred");
+                e.printStackTrace();
+            }
+
+            // delete product
+            repo.delete(product);
+
+        } catch (Exception e) {
+            // handle exception
+            System.out.println("Delete product Error occurred while fetching product");
+            e.printStackTrace();
+        }
         return "redirect:/products";
     }
 
