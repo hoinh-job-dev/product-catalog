@@ -1,6 +1,5 @@
 package com.kane.manage_product.controllers;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,12 +28,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+
+
 @Controller
 @RequestMapping("/products")
 public class ProductsController {
 
     @Autowired
     private ProductsRepository repo;
+
+    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/src/main/resources/static/images/";
 
     @GetMapping({ "", "/" })
     public String ShowProductList(Model model) {
@@ -70,7 +73,8 @@ public class ProductsController {
         String storeFileName = createAt.getTime() + "_" + image.getOriginalFilename();
 
         try {
-            String uploadDir = "/static/images/";
+           
+            String uploadDir = UPLOAD_DIR;
             Path uploadPath = Paths.get(uploadDir);
 
             if (!Files.exists(uploadPath)) {
@@ -82,7 +86,9 @@ public class ProductsController {
                 Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Exception e) {
+            System.out.println("Error occurred while saving uploaded file");
             e.printStackTrace();
+            return "products/CreateProduct";
         }
 
         // save product to database
@@ -154,7 +160,7 @@ public class ProductsController {
                     return "products/EditProduct";
                 }
                 // delete old image file
-                String uploadDir = "static/images/";
+                String uploadDir = UPLOAD_DIR;
                 Path oldImageFileName = Paths.get(uploadDir + product.getImageFileName());
                 try {
                     if (Files.exists(oldImageFileName)) {
@@ -172,9 +178,8 @@ public class ProductsController {
                 storeFileName = createAt.getTime() + "_" + image.getOriginalFilename();
                 try (InputStream inputStream = image.getInputStream()) {
                     // save file to server
-                    // ignore processing file name to avoid conflict with existing file
-                    // Files.copy(inputStream, Paths.get(uploadDir + storeFileName),
-                    // StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(inputStream, Paths.get(uploadDir + storeFileName),
+                    StandardCopyOption.REPLACE_EXISTING);
                 }
                 product.setImageFileName(storeFileName);
             }
@@ -207,7 +212,7 @@ public class ProductsController {
             Product product = repo.findById(id).get();
 
             // delete image file
-            Path imagePath = Paths.get("static/images/" + product.getImageFileName());
+            Path imagePath = Paths.get(UPLOAD_DIR + product.getImageFileName());
             try {
                 Files.deleteIfExists(imagePath);
             } catch (Exception e) {
